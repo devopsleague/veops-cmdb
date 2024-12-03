@@ -1,5 +1,6 @@
 
 <h2 align="center">Simple, lightweight, and versatile operational CMDB</h2>
+
 <p align="center">
   <a href="https://github.com/veops/cmdb/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-AGPLv3-brightgreen" alt="License: GPLv3"></a>
   <a href="https:https://github.com/sendya/ant-design-pro-vue"><img src="https://img.shields.io/badge/UI-Ant%20Design%20Pro%20Vue-brightgreen" alt="UI"></a>
@@ -98,4 +99,3 @@ docker compose up -d
 4. Push to the branch (`git push origin my-feature`)
 5. Create new Pull Request
 
----
