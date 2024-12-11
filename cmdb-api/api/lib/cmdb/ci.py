@@ -295,7 +295,7 @@ class CIManager(object):
         db.session.commit()
 
         value_table = TableMap(attr_name=attr.name).table
-        with redis_lock.Lock(rd.r, "auto_inc_id_{}".format(attr.name)):
+        with redis_lock.Lock(rd.r, "auto_inc_id_{}".format(attr.name), expire=10):
             max_v = value_table.get_by(attr_id=attr.id, only_query=True).order_by(
                 getattr(value_table, 'value').desc()).first()
             if max_v is not None:
@@ -393,7 +393,7 @@ class CIManager(object):
         ci = None
         record_id = None
         password_dict = {}
-        with redis_lock.Lock(rd.r, ci_type.name):
+        with redis_lock.Lock(rd.r, ci_type.name, expire=10):
             db.session.commit()
 
             if (unique_key.default and unique_key.default.get('default') == AttributeDefaultValueEnum.AUTO_INC_ID and
@@ -550,7 +550,7 @@ class CIManager(object):
         limit_attrs = self._valid_ci_for_no_read(ci) if not _is_admin else {}
 
         record_id = None
-        with redis_lock.Lock(rd.r, ci_type.name):
+        with redis_lock.Lock(rd.r, ci_type.name, expire=10):
             db.session.commit()
 
             self._valid_unique_constraint(ci.type_id, ci_dict, ci_id)
@@ -1268,7 +1268,9 @@ class CIRelationManager(object):
             else:
                 type_relation = CITypeRelation.get_by_id(relation_type_id)
 
-            with redis_lock.Lock(rd.r, "ci_relation_add_{}_{}".format(first_ci.type_id, second_ci.type_id)):
+            with redis_lock.Lock(rd.r,
+                                 "ci_relation_add_{}_{}".format(first_ci.type_id, second_ci.type_id),
+                                 expire=10):
 
                 cls._check_constraint(first_ci_id, first_ci.type_id, second_ci_id, second_ci.type_id, type_relation)
 
@@ -1534,7 +1536,8 @@ class CITriggerManager(object):
         ci_dict.update(attr_dict)
 
     @classmethod
-    def _exec_webhook(cls, operate_type, webhook, ci_dict, trigger_id, trigger_name, record_id, ci_id=None, app=None):
+    def _exec_webhook(cls, operate_type, webhook, ci_dict, trigger_id, trigger_name, record_id,
+                      ci_id=None, app=None, record_history=True):
         app = app or current_app
 
         with app.app_context():
@@ -1552,19 +1555,20 @@ class CITriggerManager(object):
                 current_app.logger.warning("exec webhook failed: {}".format(e))
                 response = e
                 is_ok = False
-
-            CITriggerHistoryManager.add(operate_type,
-                                        record_id,
-                                        ci_dict.get('_id'),
-                                        trigger_id,
-                                        trigger_name,
-                                        is_ok=is_ok,
-                                        webhook=response)
+            if record_history:
+                CITriggerHistoryManager.add(operate_type,
+                                            record_id,
+                                            ci_dict.get('_id'),
+                                            trigger_id,
+                                            trigger_name,
+                                            is_ok=is_ok,
+                                            webhook=response)
 
             return is_ok
 
     @classmethod
-    def _exec_notify(cls, operate_type, notify, ci_dict, trigger_id, trigger_name, record_id, ci_id=None, app=None):
+    def _exec_notify(cls, operate_type, notify, ci_dict, trigger_id, trigger_name, record_id,
+                     ci_id=None, app=None, record_history=True):
         app = app or current_app
 
         with app.app_context():
@@ -1588,13 +1592,14 @@ class CITriggerManager(object):
                     response = "{}\n{}".format(response, e)
                     is_ok = False
 
-            CITriggerHistoryManager.add(operate_type,
-                                        record_id,
-                                        ci_dict.get('_id'),
-                                        trigger_id,
-                                        trigger_name,
-                                        is_ok=is_ok,
-                                        notify=response.strip())
+            if record_history:
+                CITriggerHistoryManager.add(operate_type,
+                                            record_id,
+                                            ci_dict.get('_id'),
+                                            trigger_id,
+                                            trigger_name,
+                                            is_ok=is_ok,
+                                            notify=response.strip())
 
             return is_ok
 
@@ -1671,25 +1676,47 @@ class CITriggerManager(object):
         return result
 
     @classmethod
-    def trigger_notify(cls, trigger, ci):
+    def trigger_notify(cls, trigger, ci, only_test=False):
         """
         only for date attribute
         :param trigger:
         :param ci:
+        :param only_test:
         :return:
         """
         if (trigger.option.get('notifies', {}).get('notify_at') == datetime.datetime.now().strftime("%H:%M") or
-                not trigger.option.get('notifies', {}).get('notify_at')):
+            not trigger.option.get('notifies', {}).get('notify_at')) or only_test:
 
             if trigger.option.get('webhooks'):
-                threading.Thread(target=cls._exec_webhook, args=(
-                    None, trigger.option['webhooks'], None, trigger.id, trigger.option.get('name'), None, ci.ci_id,
-                    current_app._get_current_object())).start()
+                threading.Thread(
+                    target=cls._exec_webhook,
+                    args=(None, trigger.option['webhooks'], None, trigger.id,
+                          trigger.option.get('name'), None,
+                          ci and ci.ci_id,
+                          current_app._get_current_object(), not only_test)).start()
             elif trigger.option.get('notifies'):
                 threading.Thread(target=cls._exec_notify, args=(
-                    None, trigger.option['notifies'], None, trigger.id, trigger.option.get('name'), None, ci.ci_id,
-                    current_app._get_current_object())).start()
+                    None, trigger.option['notifies'], None, trigger.id,
+                    trigger.option.get('name'), None,
+                    ci and ci.ci_id,
+                    current_app._get_current_object(), not only_test)).start()
 
             return True
 
         return False
+
+    @classmethod
+    def trigger_notify_test(cls, type_id, trigger_id):
+        trigger = CITypeTrigger.get_by_id(trigger_id) or abort(
+            404, ErrFormat.ci_type_trigger_not_found.format(trigger_id))
+
+        ci_type = CITypeCache.get(type_id) or abort(404, ErrFormat.ci_type_not_found.format(type_id))
+        attr = AttributeCache.get(ci_type.unique_id)
+        value_table = TableMap(attr=attr).table
+        if not value_table:
+            return
+
+        value = value_table.get_by(attr_id=attr.id, only_query=True).join(
+            CI, value_table.ci_id == CI.id).filter(CI.type_id == type_id).first()
+
+        cls.trigger_notify(trigger, value, only_test=True)
