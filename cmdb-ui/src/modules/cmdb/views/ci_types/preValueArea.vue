@@ -35,7 +35,7 @@
                   :title="$t('cmdb.ciType.choiceWebhookTips')"
                 >
                   <a-icon
-                    style="position:absolute;top:3px;left:-17px;color:#2f54eb;"
+                    class="tab-webhook-filter-icon"
                     type="question-circle"
                     theme="filled"
                   />
@@ -61,13 +61,11 @@
               :disable-branch-nodes="true"
               :class="{
                 'custom-treeselect': true,
-                'custom-treeselect-bgcAndBorder': true,
+                'custom-treeselect-white': true,
               }"
               :style="{
                 '--custom-height': '32px',
                 lineHeight: '32px',
-                '--custom-bg-color': '#fff',
-                '--custom-border': '1px solid #d9d9d9',
                 '--custom-multiple-lineHeight': '14px',
               }"
               v-model="choice_other.type_ids"
@@ -555,7 +553,7 @@ export default {
 
   &-tag {
     background-color: #E1EFFF;
-    color: #2F54EB;
+    color: @primary-color;
     font-size: 10px;
     font-weight: 400;
     padding: 0 3px;
@@ -575,6 +573,13 @@ export default {
     height: 20px;
     margin: 5px;
   }
+}
+
+.tab-webhook-filter-icon {
+  position: absolute;
+  top: 3px;
+  left: -17px;
+  color: @primary-color;
 }
 
 .script-tip {

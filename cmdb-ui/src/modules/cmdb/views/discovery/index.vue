@@ -25,18 +25,24 @@
           :fileList="[]"
           :beforeUpload="beforeUpload"
         >
-          <a class="setting-discovery-header-action-btn">
+          <a-button
+            type="primary"
+            class="ops-button-ghost"
+            ghost
+          >
             <a-icon type="upload" />
             {{ $t('cmdb.ad.upload') }}
-          </a>
+          </a-button>
         </a-upload>
-        <a
+        <a-button
+          type="primary"
+          class="ops-button-ghost"
+          ghost
           @click="download"
-          class="setting-discovery-header-action-btn"
         >
           <a-icon type="download" />
           {{ $t('cmdb.ad.download') }}
-        </a>
+        </a-button>
       </div>
     </div>
     <div
@@ -64,7 +70,7 @@
                 class="setting-discovery-add"
                 @click="handleOpenEditDrawer(null, 'add', DISCOVERY_CATEGORY_TYPE.PLUGIN)"
               >
-                <a-icon type="plus-circle" theme="twoTone" />
+                <a-icon class="setting-discovery-add-icon" type="plus-circle" />
                 <span class="setting-discovery-add-text">
                   {{ $t('cmdb.ad.addPlugin') }}
                 </span>
@@ -373,6 +379,10 @@ export default {
       align-items: center;
       justify-content: center;
       cursor: pointer;
+
+      &-icon {
+        color: @primary-color_9;
+      }
 
       &-text {
         color: @text-color_3;

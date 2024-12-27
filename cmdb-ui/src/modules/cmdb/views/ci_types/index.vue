@@ -140,7 +140,7 @@
                           :type="ci.icon.split('$$')[0]"
                         />
                       </template>
-                      <span :style="{ color: '#2f54eb' }" v-else>{{ ci.name[0].toUpperCase() }}</span>
+                      <span class="primary-color" v-else>{{ ci.name[0].toUpperCase() }}</span>
                     </span>
                   </div>
                   <span class="ci-types-left-detail-title">{{ ci.alias || ci.name }}</span>
@@ -1194,7 +1194,7 @@ export default {
     .selected {
       background-color: @primary-color_3;
       .ci-types-left-detail-title {
-        font-weight: 700;
+        color: @primary-color;
       }
     }
   }

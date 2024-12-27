@@ -722,9 +722,6 @@ class CITypeAttributeManager(object):
 
                     ci_cache.apply_async(args=(ci.id, None, None), queue=CMDB_QUEUE)
 
-                for item in PreferenceShowAttributes.get_by(type_id=type_id, attr_id=attr_id, to_dict=False):
-                    item.soft_delete(commit=False)
-
                 child_ids = CITypeInheritanceManager.recursive_children(type_id)
                 for _type_id in [type_id] + child_ids:
                     for item in CITypeUniqueConstraint.get_by(type_id=_type_id, to_dict=False):
@@ -740,6 +737,9 @@ class CITypeAttributeManager(object):
                     item = CITypeTrigger.get_by(type_id=_type_id, attr_id=attr_id, to_dict=False, first=True)
                     item and item.soft_delete(commit=False)
 
+                    for item in PreferenceShowAttributes.get_by(type_id=_type_id, attr_id=attr_id, to_dict=False):
+                        item.soft_delete(commit=False)
+                    
                 for item in (CITypeRelation.get_by(parent_id=type_id, to_dict=False) +
                              CITypeRelation.get_by(child_id=type_id, to_dict=False)):
                     if item.parent_id == type_id and attr_id in (item.parent_attr_ids or []):
@@ -862,15 +862,15 @@ class CITypeRelationManager(object):
 
         graph = nx.DiGraph()
 
-        def get_children(_id):
+        def get_children(_id, _graph):
             children = CITypeRelation.get_by(parent_id=_id, to_dict=False)
 
             for i in children:
                 if i.child_id != _id:
-                    graph.add_edge(i.parent_id, i.child_id)
-                    get_children(i.child_id)
+                    _graph.add_edge(i.parent_id, i.child_id)
+                    get_children(i.child_id, _graph)
 
-        get_children(source_type_id)
+        get_children(source_type_id, graph)
 
         paths = list(nx.all_simple_paths(graph, source_type_id, target_type_ids))
 
@@ -1145,13 +1145,14 @@ class CITypeAttributeGroupManager(object):
             else:
                 group_pos = group2pos[group['name']]
 
-            attr = None
             for i in items:
                 if i.attr_id in id2attr:
                     attr = id2attr[i.attr_id]
                     attr['inherited'] = group['inherited']
                     attr['inherited_from'] = group.get('inherited_from')
                     result[group_pos]['attributes'].append(attr)
+                else:
+                    continue
 
                 if i.attr_id in attr2pos:
                     result[attr2pos[i.attr_id][0]]['attributes'].remove(attr2pos[i.attr_id][1])

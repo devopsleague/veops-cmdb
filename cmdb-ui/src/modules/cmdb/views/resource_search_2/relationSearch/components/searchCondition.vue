@@ -13,12 +13,11 @@
       <div class="search-condition-control">
         <treeselect
           :value="sourceCIType"
-          class="custom-treeselect custom-treeselect-bgcAndBorder filter-content-ciTypes"
+          class="custom-treeselect custom-treeselect-white filter-content-ciTypes"
           :style="{
             width: '100%',
             zIndex: '1000',
             '--custom-height': '32px',
-            '--custom-bg-color': '#FFF',
             '--custom-multiple-lineHeight': '32px',
           }"
           :multiple="false"
@@ -512,15 +511,31 @@ export default {
       padding: 14px 18px;
       width: 500px;
     }
+
+    /deep/ .filter-content-ciTypes {
+      &:not(.vue-treeselect--disabled):not(.vue-treeselect--focused) {
+        .vue-treeselect__control {
+          border: solid 1px transparent;
+
+          &:hover {
+            border-color: @primary-color;
+          }
+        }
+      }
+    }
   }
 
   &-input {
     width: 100%;
 
     /deep/ .ant-input {
-      border: none;
+      border: solid 1px transparent;
       box-shadow: none;
       cursor: pointer;
+
+      &:hover {
+        border-color: @primary-color;
+      }
     }
 
     &-suffix {
@@ -532,8 +547,12 @@ export default {
     width: 100%;
 
     /deep/ .ant-select-selection {
-      border: none;
+      border: solid 1px transparent;
       box-shadow: none;
+
+      &:hover {
+        border-color: @primary-color;
+      }
     }
   }
 
@@ -679,14 +698,14 @@ export default {
       cursor: pointer;
 
       &:hover {
-        background-color: #D9E4FA;
+        background-color: @primary-color_4;
 
         .search-condition-favor-name {
-          color: #2F54EB;
+          color: @primary-color;
         }
 
         .search-condition-favor-close {
-          color: #2F54EB;
+          color: @primary-color;
         }
       }
     }
@@ -717,10 +736,10 @@ export default {
     }
 
     &:hover {
-      background-color: #D9E4FA;
+      background-color: @primary-color_4;
 
       .search-condition-hide-icon {
-        color: #2F54EB;
+        color: @primary-color_4;
       }
     }
   }

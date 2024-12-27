@@ -148,7 +148,7 @@
                       :type="ciType.icon.split('$$')[0]"
                     />
                   </template>
-                  <span :style="{ color: '#2f54eb' }" v-else>{{ ciType.name[0].toUpperCase() }}</span>
+                  <span class="primary-color" v-else>{{ ciType.name[0].toUpperCase() }}</span>
                 </template>
                 <span :style="{ color: '#000' }"> {{ form.name }}</span>
               </div>
@@ -195,12 +195,14 @@
             </template>
           </div>
           <a-form-model-item
-            :label="$t('cmdb.custom_dashboard.showIcon')"
             prop="showIcon"
-            :label-col="{ span: 5 }"
-            :wrapper-col="{ span: 18 }"
+            :label-col="{ span: 0 }"
+            :wrapper-col="{ span: 23 }"
           >
-            <a-switch v-model="form.showIcon"></a-switch>
+            <div class="chart-left-show-icon">
+              <span class="chart-left-show-icon-label">{{ $t('cmdb.custom_dashboard.showIcon') }}:</span>
+              <a-switch v-model="form.showIcon"></a-switch>
+            </div>
           </a-form-model-item>
         </a-form-model>
       </div>
@@ -733,6 +735,9 @@ export default {
       width: 92%;
       position: relative;
       padding: 12px;
+      margin-top: 4px;
+      display: inline-block;
+
       .chart-left-preview-operation {
         color: #86909c;
         position: absolute;
@@ -753,12 +758,26 @@ export default {
       background-position-x: center;
       background-position-y: center;
     }
+
+    &-show-icon {
+      display: flex;
+      align-items: center;
+
+      &-label {
+        flex-shrink: 0;
+        margin-right: 8px;
+      }
+    }
   }
   .chart-right {
     width: 50%;
     h4 {
       font-weight: 700;
       color: #000;
+
+      &:not(:first-child) {
+        margin-top: 14px;
+      }
     }
     .chart-right-type {
       display: flex;
@@ -781,7 +800,7 @@ export default {
         }
       }
       .chart-right-type-box-selected {
-        background-color: #e5f1ff;
+        background-color: @primary-color_3;
       }
     }
     .chart-width {
@@ -797,7 +816,7 @@ export default {
 <style lang="less">
 .chart-wrapper {
   .ant-form-item {
-    margin-bottom: 0;
+    margin-bottom: 8px;
   }
 }
 </style>

@@ -114,7 +114,11 @@
         :placeholder="$t('cmdb.preference.searchPlaceholder')"
       />
       <div v-for="group in filterCiTypeData" :key="group.id">
-        <p @click="changeGroupExpand(group)" :style="{ display: 'inline-block', cursor: 'pointer' }">
+        <p
+          @click="changeGroupExpand(group)"
+          :style="{ display: 'inline-block', cursor: 'pointer' }"
+          class="cmdb-preference-right-group-title"
+        >
           <a-icon :type="expandKeys.includes(group.id) ? 'caret-down' : 'caret-right'" />{{ group.name }}({{
             group.ci_types ? group.ci_types.length : 0
           }})
@@ -624,6 +628,16 @@ export default {
     flex: 1;
     height: 100%;
     padding-top: 24px;
+
+    &-group-title {
+      width: 300px;
+      margin-bottom: 20px;
+
+      &:hover {
+        color: @primary-color;
+      }
+    }
+
     .cmdb-preference-content {
       display: flex;
       flex-direction: row;
@@ -640,11 +654,11 @@ export default {
         height: 155px;
         border-radius: @border-radius-box;
         background-color: #fff;
-        box-shadow: 0px 2px 8px rgba(149, 160, 208, 0.25);
+        box-shadow: ~'0px 2px 8px @{primary-color}15';
         margin: 0 20px 20px 0;
         padding: 12px;
         &:hover {
-          box-shadow: 4px 25px 30px rgba(50, 89, 134, 0.25);
+          box-shadow: ~'4px 25px 30px @{primary-color}15';
           transform: scale(1.1);
         }
         .cmdb-preference-header {
@@ -719,10 +733,10 @@ export default {
             align-items: center;
             gap: 3px;
             font-size: 12px;
-            color: rgba(0, 0, 0, 0.76);
+            color: @text-color_1;
 
             &:hover {
-              color: #1890ff;
+              color: @primary-color;
             }
           }
 

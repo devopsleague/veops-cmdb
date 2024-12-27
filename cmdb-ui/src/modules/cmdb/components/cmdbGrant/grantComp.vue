@@ -88,6 +88,7 @@ import ReadGrantModal from './readGrantModal'
 import RelationViewGrant from './relationViewGrant.vue'
 import TopologyViewGrant from './topologyViewGrant.vue'
 import { getCITypeGroupById, ciTypeFilterPermissions } from '../../api/CIType'
+import { CI_DEFAULT_ATTR } from '@/modules/cmdb/utils/const.js'
 
 export default {
   name: 'GrantComp',
@@ -186,6 +187,13 @@ export default {
     },
     getFilterPermissions() {
       ciTypeFilterPermissions(this.CITypeId).then((res) => {
+        Object.keys(res).forEach((key) => {
+          const attr_filter = res?.[key]?.attr_filter
+          if (attr_filter?.length) {
+            res[key].attr_filter = attr_filter.filter((item) => ![CI_DEFAULT_ATTR.UPDATE_USER, CI_DEFAULT_ATTR.UPDATE_TIME].includes(item))
+          }
+        })
+
         this.filerPerimissions = res
       })
     },
@@ -352,7 +360,6 @@ export default {
 </style>
 
 <style lang="less">
-
 .cmdb-grant {
   .grant-button {
     padding: 6px 8px;
@@ -363,9 +370,13 @@ export default {
     margin: 15px 0;
     display: inline-block;
     transition: all 0.3s;
-    &:hover {
-      box-shadow: 2px 3px 4px @primary-color_5;
-    }
+    z-index: 1;
+
+    .btn-wave-hover(@primary-color_4, -1);
+  }
+
+  .grant-table-row-focus {
+    background-color: @primary-color_8;
   }
 }
 </style>

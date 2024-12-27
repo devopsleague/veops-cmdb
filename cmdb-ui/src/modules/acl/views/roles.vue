@@ -58,10 +58,7 @@
           :title="$t('acl.visualRole')"
           :width="120"
           align="center"
-          :filters="[
-            { label: $t('yes'), value: 1 },
-            { label: $t('no'), value: 0 },
-          ]"
+          :filters="visualRoleFilters"
           :filterMultiple="false"
           :filter-method="
             ({ value, row }) => {
@@ -155,6 +152,10 @@ export default {
       pageSizeOptions: ['20', '50', '100', '200'],
       searchName: '',
       filterTableValue: { user_role: 1, user_only: 0 },
+      visualRoleFilters: [
+        { label: this.$t('yes'), value: 1 },
+        { label: this.$t('no'), value: 0 }
+      ]
     }
   },
   computed: {
@@ -291,11 +292,11 @@ export default {
   background-color: #fff;
   height: calc(100vh - 64px);
   margin-bottom: -24px;
-  padding: 24px;
+  padding: 20px;
   .acl-roles-header {
     width: 100%;
     display: inline-flex;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     align-items: center;
     .ant-checkbox-wrapper {
       margin-left: auto;

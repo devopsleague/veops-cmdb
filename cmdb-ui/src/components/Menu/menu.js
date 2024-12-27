@@ -92,7 +92,7 @@ export default {
       e.preventDefault()
       e.stopPropagation()
       this.$confirm({
-        title: this.$t('alert'),
+        title: this.$t('warning'),
         content: this.$t('cmdb.preference.confirmcancelSub2', { name: menu.meta.title }),
         onOk() {
           const citypeId = menu.meta.typeId
@@ -171,7 +171,6 @@ export default {
     },
     renderMenuItem(menu) {
       const isShowDot = menu.path.substr(0, 22) === '/cmdb/instances/types/'
-      const isShowGrant = menu.path.substr(0, 20) === '/cmdb/relationviews/'
       const target = menu.meta.target || null
       const tag = target && 'a' || 'router-link'
       const props = { to: { name: menu.name } }
@@ -205,11 +204,9 @@ export default {
                   <a-icon type="menu" ref="extraEllipsis" class="custom-menu-extra-ellipsis"></a-icon>
                 </a-popover>
               }
-              {isShowGrant && <a-icon class="custom-menu-extra-ellipsis" onClick={e => this.handlePerm(e, menu, 'RelationView')} type="user-add" />}
             </span>
           </tag>
           {isShowDot && <CMDBGrant ref="cmdbGrantCIType" resourceType="CIType" app_id="cmdb" />}
-          {isShowGrant && <CMDBGrant ref="cmdbGrantRelationView" resourceType="RelationView" app_id="cmdb" />}
         </Item>
       )
     },
@@ -313,10 +310,7 @@ export default {
         <Item class={styles['cmdb-side-menu-search']}>
           <a-input
             ref="cmdbSideMenuSearchInputRef"
-            class={styles['cmdb-side-menu-search-input']}
-            style={{
-              border: this.$route.name === 'cmdb_resource_search' ? 'solid 1px #B1C9FF' : ''
-            }}
+            class={`ops-input ${this.$route.name === 'cmdb_resource_search' ? 'cmdb-side-menu-search-focused' : ''}`}
             placeholder={this.$t('cmdbSearch')}
             onPressEnter={(e) => {
               this.jumpCMDBSearch(e.target.value)

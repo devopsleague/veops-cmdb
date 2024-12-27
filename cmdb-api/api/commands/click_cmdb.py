@@ -228,6 +228,12 @@ def cmdb_trigger():
     """
     from api.lib.cmdb.ci import CITriggerManager
 
+    current_app.test_request_context().push()
+    if not UserCache.get('worker'):
+        from api.lib.perm.acl.user import UserCRUD
+        UserCRUD.add(username='worker', password=uuid.uuid4().hex, email='worker@xxx.com')
+    login_user(UserCache.get('worker'))
+
     current_day = datetime.datetime.today().strftime("%Y-%m-%d")
     trigger2cis = dict()
     trigger2completed = dict()
@@ -256,10 +262,10 @@ def cmdb_trigger():
                         trigger2cis[trigger.id] = (trigger, ready_cis)
                     else:
                         cur = trigger2cis[trigger.id]
-                        cur_ci_ids = {i.ci_id for i in cur[1]}
+                        cur_ci_ids = {_ci.ci_id for _ci in cur[1]}
                         trigger2cis[trigger.id] = (
-                            trigger, cur[1] + [i for i in ready_cis if i.ci_id not in cur_ci_ids
-                                               and i.ci_id not in trigger2completed.get(trigger.id, {})])
+                            trigger, cur[1] + [_ci for _ci in ready_cis if _ci.ci_id not in cur_ci_ids
+                                               and _ci.ci_id not in trigger2completed.get(trigger.id, {})])
 
             for tid in trigger2cis:
                 trigger, cis = trigger2cis[tid]
@@ -346,7 +352,7 @@ def cmdb_inner_secrets_init(address):
     if valid_address(address):
         token = current_app.config.get("INNER_TRIGGER_TOKEN", "") if not token else token
         if not token:
-            token = click.prompt(f'Enter root token', hide_input=True, confirmation_prompt=False)
+            token = click.prompt('Enter root token', hide_input=True, confirmation_prompt=False)
         assert token is not None
         resp = requests.post("{}/api/v0.1/secrets/auto_seal".format(address.strip("/")),
                              headers={"Inner-Token": token})

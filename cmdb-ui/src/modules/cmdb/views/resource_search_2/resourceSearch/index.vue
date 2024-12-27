@@ -15,9 +15,11 @@
         :searchValue="searchValue"
         :selectCITypeIds="selectCITypeIds"
         :expression="expression"
+        :searchMode="currentSearchMode"
         @changeFilter="changeFilter"
         @updateAllAttributesList="updateAllAttributesList"
         @saveCondition="saveCondition"
+        @updateSearchMode="updateSearchMode"
       />
       <HistoryList
         :recentList="recentList"
@@ -46,9 +48,11 @@
           :searchValue="searchValue"
           :selectCITypeIds="selectCITypeIds"
           :expression="expression"
+          :searchMode="currentSearchMode"
           @changeFilter="changeFilter"
           @updateAllAttributesList="updateAllAttributesList"
           @saveCondition="saveCondition"
+          @updateSearchMode="updateSearchMode"
         />
         <HistoryList
           :recentList="recentList"
@@ -123,6 +127,7 @@ import { getPreferenceSearch, savePreferenceSearch, getSubscribeAttributes, dele
 import { searchAttributes, getCITypeAttributesByTypeIds } from '@/modules/cmdb/api/CITypeAttr'
 import { searchCI } from '@/modules/cmdb/api/ci'
 import { getCITypes } from '@/modules/cmdb/api/CIType'
+import { SEARCH_MODE } from './constants.js'
 
 import SearchInput from './components/searchInput.vue'
 import HistoryList from './components/historyList.vue'
@@ -172,6 +177,7 @@ export default {
       showInstanceDetail: false,
       detailCIId: -1,
       detailCITypeId: -1,
+      currentSearchMode: SEARCH_MODE.NORMAL,
     }
   },
   computed: {
@@ -253,7 +259,8 @@ export default {
           if (
             option.searchValue === this.searchValue &&
             option.expression === this.expression &&
-            _.isEqual(option.ciTypeIds, this.selectCITypeIds)
+            _.isEqual(option.ciTypeIds, this.selectCITypeIds) &&
+            option.searchMode === this.currentSearchMode
           ) {
             needDeleteList.push(item.id)
           } else {
@@ -279,7 +286,8 @@ export default {
             searchValue: this.searchValue,
             expression: this.expression,
             ciTypeIds: this.selectCITypeIds,
-            ciTypeNames
+            ciTypeNames,
+            searchMode: this.currentSearchMode
           },
           name: '__recent__'
         })
@@ -320,10 +328,21 @@ export default {
         })
       }
 
+      let querySearchValue = ''
+      if (searchValue) {
+        if (
+          this.currentSearchMode === SEARCH_MODE.COLUMN &&
+          searchValue.includes('\n')
+        ) {
+          const values = searchValue.split('\n').filter(v => v.trim())
+          querySearchValue = `,(${values.join(';')})`
+        } else {
+          querySearchValue = `,*${searchValue}*`
+        }
+      }
+
       const res = await searchCI({
-        q: `${ciTypeIds?.length ? `_type:(${ciTypeIds.join(';')})` : ''}${exp ? `,${exp}` : ''}${
-          searchValue ? `,*${searchValue}*` : ''
-        }`,
+        q: `${ciTypeIds?.length ? `_type:(${ciTypeIds.join(';')})` : ''}${exp ? `,${exp}` : ''}${querySearchValue}`,
         count: this.pageSize,
         page: this.currentPage,
         sort: '_type'
@@ -477,6 +496,7 @@ export default {
       this.searchValue = data?.searchValue || ''
       this.expression = data?.expression || ''
       this.selectCITypeIds = data?.ciTypeIds || []
+      this.currentSearchMode = data?.searchMode || 'normal'
 
       this.hideDetail()
       this.loadInstance()
@@ -533,6 +553,10 @@ export default {
     clickFavor(data) {
       this.isSearch = true
       this.showDetail(data)
+    },
+
+    updateSearchMode(mode) {
+      this.currentSearchMode = mode
     }
   }
 }
@@ -546,7 +570,7 @@ export default {
 
   &-before {
     width: 100%;
-    max-width: 725px;
+    max-width: 718px;
     height: 100%;
     margin: 0 auto;
     padding-top: 100px;

@@ -26,7 +26,8 @@ const cmdb_en = {
         ad: 'AutoDiscovery',
         cidetail: 'CI Detail',
         scene: 'Scene',
-        dcim: 'DCIM'
+        dcim: 'DCIM',
+        serviceTree: 'Service Tree'
     },
     ciType: {
         ciType: 'CIType',
@@ -314,6 +315,10 @@ const cmdb_en = {
         enum: 'Enum',
         ciGrantTip: `Filter conditions can be changed dynamically using {{}} referenced variables, currently user variables are supported, such as {{user.uid}},{{user.username}},{{user.email}},{{user.nickname}}`,
         searchInputTip: 'Please search for resource keywords',
+        columnSearchInputTip: '192.168.1.1\n192.168.1.2\n192.168.1.3',
+        rowSearchMode: 'Single Row',
+        columnSearchMode: 'Multi Row',
+        columnSearchTip: 'Supports retrieval of short texts only',
         resourceSearch: 'Resource Search',
         recentSearch: 'Recent Search',
         myCollection: 'My Collection',

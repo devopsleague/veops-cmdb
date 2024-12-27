@@ -26,7 +26,8 @@ const cmdb_zh = {
         ad: '自动发现',
         cidetail: 'CI 详情',
         scene: '场景',
-        dcim: '数据中心'
+        dcim: '数据中心',
+        serviceTree: '服务树'
     },
     ciType: {
         ciType: '模型',
@@ -314,6 +315,10 @@ const cmdb_zh = {
         enum: '枚举',
         ciGrantTip: `筛选条件可使用{{}}引用变量实现动态变化，目前支持用户变量，如{{user.uid}},{{user.username}},{{user.email}},{{user.nickname}}`,
         searchInputTip: '请搜索资源关键字',
+        columnSearchInputTip: '192.168.1.1\n192.168.1.2\n192.168.1.3',
+        rowSearchMode: '单行',
+        columnSearchMode: '多行',
+        columnSearchTip: '仅支持检索短文本',
         resourceSearch: '资源搜索',
         recentSearch: '最近搜索',
         myCollection: '我的收藏',

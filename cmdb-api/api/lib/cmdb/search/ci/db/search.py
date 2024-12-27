@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import copy
 import six
 import time
+from flask import abort
 from flask import current_app
 from flask_login import current_user
 from jinja2 import Template
@@ -27,6 +28,7 @@ from api.lib.cmdb.search.ci.db.query_sql import FACET_QUERY
 from api.lib.cmdb.search.ci.db.query_sql import QUERY_CI_BY_ATTR_NAME
 from api.lib.cmdb.search.ci.db.query_sql import QUERY_CI_BY_ID
 from api.lib.cmdb.search.ci.db.query_sql import QUERY_CI_BY_NO_ATTR
+from api.lib.cmdb.search.ci.db.query_sql import QUERY_CI_BY_NO_ATTR_IN
 from api.lib.cmdb.search.ci.db.query_sql import QUERY_CI_BY_TYPE
 from api.lib.cmdb.search.ci.db.query_sql import QUERY_UNION_CI_ATTRIBUTE_IS_NULL
 from api.lib.cmdb.utils import TableMap
@@ -141,7 +143,7 @@ class Search(object):
                                     if str(ci_type.id) in self.type_id_list:
                                         self.type_id_list.remove(str(ci_type.id))
                                     type_id_list.remove(str(ci_type.id))
-                                    sub.extend([i for i in queries[1:] if isinstance(i, six.string_types)])
+                                    sub.extend([i for i in queries[1:] if isinstance(i, (six.string_types, list))])
 
                                     sub.insert(0, "_type:{}".format(ci_type.id))
                                     queries.append(dict(operator="|", queries=sub))
@@ -151,7 +153,9 @@ class Search(object):
                                 if not self.fl:
                                     self.fl = set(self.type2filter_perms[ci_type.id]['attr_filter'])
                                 else:
-                                    self.fl = set(self.fl) & set(self.type2filter_perms[ci_type.id]['attr_filter'])
+                                    fl = set(self.fl) & set(self.type2filter_perms[ci_type.id]['attr_filter'])
+                                    not fl and abort(400, ErrFormat.ci_filter_perm_attr_no_permission.format(self.fl))
+                                    self.fl = fl
                             else:
                                 self.fl = self.fl or {}
                                 if not self.fl or isinstance(self.fl, dict):
@@ -433,11 +437,14 @@ class Search(object):
                 if not q.startswith("("):
                     raise SearchError(ErrFormat.ci_search_Parentheses_invalid)
 
-                operator, q = self._operator_proc(q)
-                if q.endswith(")"):
-                    result.append(dict(operator=operator, queries=[q[1:-1]]))
+                if ":" not in q:  # multi-line search
+                    result.append(q[1:-1].split(';'))
+                else:
+                    operator, q = self._operator_proc(q)
+                    if q.endswith(")"):
+                        result.append(dict(operator=operator, queries=[q[1:-1]]))
 
-                sub = dict(operator=operator, queries=[q[1:]])
+                    sub = dict(operator=operator, queries=[q[1:]])
             elif q.endswith(")") and sub:
                 sub['queries'].append(q[:-1])
                 result.append(copy.deepcopy(sub))
@@ -525,22 +532,31 @@ class Search(object):
         query_sql = ""
 
         for q in queries:
+            # current_app.logger.debug(q)
             _query_sql = ""
             if isinstance(q, dict):
-                alias, _query_sql, operator = self.__query_build_by_field(q['queries'], True, True, alias, is_sub=True)
-                # current_app.logger.info(_query_sql)
-                # current_app.logger.info((operator, is_first, alias))
-                operator = q['operator']
+                if len(q['queries']) == 1 and ";" in q['queries'][0]:
+                    values = q['queries'][0].split(";")
+                    in_values = ",".join("'{0}'".format(v) for v in values)
+                    _query_sql = QUERY_CI_BY_NO_ATTR_IN.format(in_values, alias)
+                    operator = q['operator']
+                else:
+                    alias, _query_sql, operator = self.__query_build_by_field(q['queries'], True, True, alias,
+                                                                              is_sub=True)
+                    operator = q['operator']
 
             elif ":" in q and not q.startswith("*"):
                 alias, _query_sql, operator = self.__query_by_attr(q, queries, alias, is_sub)
             elif q == "*":
                 continue
             elif q:
-                q = q.replace("'", "\\'")
-                q = q.replace('"', '\\"')
-                q = q.replace("*", "%").replace('\\n', '%')
-                _query_sql = QUERY_CI_BY_NO_ATTR.format(q, alias)
+                if not isinstance(q, list):
+                    q = q.replace("'", "\\'")
+                    q = q.replace('"', '\\"')
+                    q = q.replace("*", "%").replace('\\n', '%')
+                    _query_sql = QUERY_CI_BY_NO_ATTR.format(q, alias)
+                else:
+                    _query_sql = QUERY_CI_BY_NO_ATTR_IN.format(",".join("'{0}'".format(v) for v in q), alias)
 
             if is_first and _query_sql and not self.only_type_query:
                 query_sql = "SELECT * FROM ({0}) AS {1}".format(_query_sql, alias)
